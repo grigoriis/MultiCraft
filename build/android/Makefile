@@ -263,7 +263,7 @@ $(OPENAL_LIB) : $(OPENAL_TIMESTAMP)
 	export TARGET_OS=OS_ANDROID_CROSSCOMPILE;                                  \
 	cmake .. -DCMAKE_TOOLCHAIN_FILE=../XCompile-Android.txt                    \
 		-DHOST=${TARGET_TOOLCHAIN} -DTOOLCHAIN=${TOOLCHAIN}                    \
-		-DALSOFT_EXAMPLES=0 -DALSOFT_UTILS=0 -DALSOFT_HRTF_DEFS=0 || exit 1;   \
+		-DALSOFT_EXAMPLES=0 -DALSOFT_UTILS=0 || exit 1;                        \
 	$(MAKE) -s || exit 1;                                                      \
 	touch ${OPENAL_TIMESTAMP};                                                 \
 	touch ${OPENAL_TIMESTAMP_INT};                                             \
