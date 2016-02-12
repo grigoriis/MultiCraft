@@ -260,13 +260,6 @@ $(OPENAL_LIB) : $(OPENAL_TIMESTAMP)
 	export PATH="$${TOOLCHAIN}/bin:$${PATH}";                                  \
 	export CXX=${CROSS_PREFIX}g++;                                             \
 	export CC=${CROSS_PREFIX}gcc;                                              \
-	export AR=${CROSS_PREFIX}ar;                                               \
-	export LD=${CROSS_PREFIX}ld;                                               \
-	export AS=${CROSS_PREFIX}as;                                               \
-	export NM=${CROSS_PREFIX}nm;                                               \
-	export STRIP=${CROSS_PREFIX}strip;                                         \
-	export RANLIB=${CROSS_PREFIX}ranlib;                                       \
-	export OBJDUMP=${CROSS_PREFIX}objdump;                                     \
 	export TARGET_OS=OS_ANDROID_CROSSCOMPILE;                                  \
 	cmake .. -DCMAKE_TOOLCHAIN_FILE=../XCompile-Android.txt                    \
 		-DHOST=${TARGET_TOOLCHAIN} -DTOOLCHAIN=${TOOLCHAIN}                    \
@@ -320,13 +313,6 @@ $(OGG_LIB): $(OGG_TIMESTAMP)
 	export PATH="$${TOOLCHAIN}/bin:$${PATH}";                                  \
 	export CXX=${CROSS_PREFIX}g++;                                             \
 	export CC=${CROSS_PREFIX}gcc;                                              \
-	export AR=${CROSS_PREFIX}ar;                                               \
-	export LD=${CROSS_PREFIX}ld;                                               \
-	export AS=${CROSS_PREFIX}as;                                               \
-	export NM=${CROSS_PREFIX}nm;                                               \
-	export STRIP=${CROSS_PREFIX}strip;                                         \
-	export RANLIB=${CROSS_PREFIX}ranlib;                                       \
-	export OBJDUMP=${CROSS_PREFIX}objdump;                                     \
 	export TARGET_OS=OS_ANDROID_CROSSCOMPILE;                                  \
 	CC=${CROSS_PREFIX}gcc ./configure --host=${TARGET_HOST} --target=${TARGET_HOST} \
 		--build=x86_64-linux --with-sysroot="${TOOLCHAIN}" --prefix="${TOOLCHAIN}" || exit 1;   \
@@ -379,19 +365,11 @@ $(VORBIS_LIB): $(VORBIS_TIMESTAMP) $(OGG_LIB)
 	export PATH="$${TOOLCHAIN}/bin:$${PATH}";                                     \
 	export CXX=${CROSS_PREFIX}g++;                                                \
 	export CC=${CROSS_PREFIX}gcc;                                                 \
-	export AR=${CROSS_PREFIX}ar;                                                  \
-	export LD=${CROSS_PREFIX}ld;                                                  \
-	export AS=${CROSS_PREFIX}as;                                                  \
-	export NM=${CROSS_PREFIX}nm;                                                  \
-	export STRIP=${CROSS_PREFIX}strip;                                            \
-	export RANLIB=${CROSS_PREFIX}ranlib;                                          \
-	export OBJDUMP=${CROSS_PREFIX}objdump;                                        \
 	export TARGET_OS=OS_ANDROID_CROSSCOMPILE;                                     \
 	CC=${CROSS_PREFIX}gcc ./configure --host=${TARGET_HOST} --target=${TARGET_HOST} \
-		--build=x86_64-linux --with-sysroot="${TOOLCHAIN}"                        \
-		--with-ogg-libraries="${VORBIS_DIR}/../libogg/src/.libs"                  \
-		--with-ogg-includes="${VORBIS_DIR}/../libogg/include" OGG_CFLAGS="${VORBIS_DIR}/../libogg" \
-		--prefix="${TOOLCHAIN}" || exit 1;                                        \
+		--build=x86_64-linux --with-sysroot="${TOOLCHAIN}" \
+		CPPFLAGS="-I${OGG_DIR}/include" OGG_CFLAGS="${OGG_DIR}"  \
+		--prefix="${TOOLCHAIN}" LDFLAGS="-L${OGG_DIR}/src/.libs" || exit 1;                      \
 	CC=${CROSS_PREFIX}gcc ANDROID_DEV=/tmp/ndk-${TARGET_HOST}-vorbis make || exit 1; \
 	touch ${VORBIS_TIMESTAMP};                                                    \
 	touch ${VORBIS_TIMESTAMP_INT};                                                \
@@ -549,13 +527,6 @@ $(FREETYPE_LIB) : $(FREETYPE_TIMESTAMP)
 	export PATH="$${TOOLCHAIN}/bin:$${PATH}";                                  \
 	export CXX=${CROSS_PREFIX}g++;                                             \
 	export CC=${CROSS_PREFIX}gcc;                                              \
-	export AR=${CROSS_PREFIX}ar;                                               \
-	export LD=${CROSS_PREFIX}ld;                                               \
-	export AS=${CROSS_PREFIX}as;                                               \
-	export NM=${CROSS_PREFIX}nm;                                               \
-	export STRIP=${CROSS_PREFIX}strip;                                         \
-	export RANLIB=${CROSS_PREFIX}ranlib;                                       \
-	export OBJDUMP=${CROSS_PREFIX}objdump;                                     \
 	export TARGET_OS=OS_ANDROID_CROSSCOMPILE;                                  \
 	CC=${CROSS_PREFIX}gcc ./configure  --host=${TARGET_TOOLCHAIN}              \
 		--prefix=${TOOLCHAIN} --with-png=no --with-harfbuzz=no || exit 1;      \
