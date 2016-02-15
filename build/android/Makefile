@@ -339,16 +339,16 @@ $(VORBIS_LIB): $(VORBIS_TIMESTAMP) $(OGG_LIB)
 	cd ${VORBIS_DIR};                                                             \
 	export TOOLCHAIN=/tmp/ndk-${TARGET_HOST}-vorbis;                              \
 	${ANDROID_NDK}/build/tools/make-standalone-toolchain.sh                       \
-	--toolchain=${TARGET_TOOLCHAIN}${COMPILER_VERSION}                           \
+	--toolchain=${TARGET_TOOLCHAIN}${COMPILER_VERSION}                            \
 	--install-dir=$${TOOLCHAIN};                                                  \
 	export PATH="$${TOOLCHAIN}/bin:$${PATH}";                                     \
 	export CXX=${CROSS_PREFIX}g++;                                                \
 	export CC=${CROSS_PREFIX}gcc;                                                 \
 	export TARGET_OS=OS_ANDROID_CROSSCOMPILE;                                     \
 	CC=${CROSS_PREFIX}gcc ./configure --host=${TARGET_HOST} --target=${TARGET_HOST} \
-		--build=x86_64-linux --with-sysroot="${TOOLCHAIN}" \
-		CPPFLAGS="-I${OGG_DIR}/include" OGG_CFLAGS="${OGG_DIR}"  \
-		--prefix="${TOOLCHAIN}" LDFLAGS="-L${OGG_DIR}/src/.libs" || exit 1;                      \
+		--build=x86_64-linux --with-sysroot="${TOOLCHAIN}"                        \
+		CPPFLAGS="-I${OGG_DIR}/include" OGG_CFLAGS="${OGG_DIR}"                   \
+		--prefix="${TOOLCHAIN}" LDFLAGS="-L${OGG_DIR}/src/.libs" || exit 1;       \
 	CC=${CROSS_PREFIX}gcc ANDROID_DEV=/tmp/ndk-${TARGET_HOST}-vorbis make || exit 1; \
 	touch ${VORBIS_TIMESTAMP};                                                    \
 	touch ${VORBIS_TIMESTAMP_INT};                                                \
