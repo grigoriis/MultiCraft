@@ -248,7 +248,7 @@ $(OPENAL_LIB) : $(OPENAL_TIMESTAMP)
 	export CROSS_PREFIX=${CROSS_PREFIX};                                       \
 	export TOOLCHAIN=/tmp/ndk-${TARGET_HOST}-openal;                           \
 	${ANDROID_NDK}/build/tools/make-standalone-toolchain.sh                    \
-	--toolchain=${TARGET_TOOLCHAIN}-${COMPILER_VERSION}                        \
+	--toolchain=${TARGET_TOOLCHAIN}${COMPILER_VERSION}                        \
 	--install-dir=$${TOOLCHAIN};                                               \
 	export PATH="$${TOOLCHAIN}/bin:$${PATH}";                                  \
 	export CXX=${CROSS_PREFIX}g++;                                             \
