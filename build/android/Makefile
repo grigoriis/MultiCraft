@@ -253,13 +253,13 @@ $(OPENAL_LIB) : $(OPENAL_TIMESTAMP)
 	export PATH="$${TOOLCHAIN}/bin:$${PATH}";                                  \
 	export CXX=${CROSS_PREFIX}g++;                                             \
 	export CC=${CROSS_PREFIX}gcc;                                              \
-	export CFLAGS="$${CFLAGS} ${TARGET_CFLAGS_ADDON} -DAL_ALEXT_PROTOTYPES -DAL_BUILD_LIBRARY -DANDROID"; \
+	export CFLAGS="$${CFLAGS} ${TARGET_CFLAGS_ADDON} -mfpu=neon -DAL_ALEXT_PROTOTYPES -DAL_BUILD_LIBRARY -DANDROID"; \
 	export CPPFLAGS="$${CPPFLAGS} ${TARGET_CFLAGS_ADDON}";                     \
 	export LDFLAGS="$${LDFLAGS} ${TARGET_LDFLAGS_ADDON}";                      \
 	export TARGET_OS=OS_ANDROID_CROSSCOMPILE;                                  \
 	cmake .. -DCMAKE_TOOLCHAIN_FILE=../XCompile-Android.txt                    \
 		-DHOST=${TARGET_TOOLCHAIN} -DTOOLCHAIN=${TOOLCHAIN}                    \
-		-DALSOFT_EXAMPLES=0 -DALSOFT_UTILS=0 -O3 || exit 1;                    \
+		-DALSOFT_EXAMPLES=0 -DALSOFT_UTILS=0 -O3 -DHAVE_NEON=1 -DHAVE_ARM_NEON_H=1 || exit 1;                    \
 	$(MAKE) -s || exit 1;                                                      \
 	touch ${OPENAL_TIMESTAMP};                                                 \
 	touch ${OPENAL_TIMESTAMP_INT};                                             \
