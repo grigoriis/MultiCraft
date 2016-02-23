@@ -107,6 +107,7 @@ LOCAL_C_INCLUDES :=                               \
 		deps/freetype/include                     \
 		deps/curl/include                         \
 		deps/openal/include                       \
+		deps/tremor                               \
 		deps/libvorbis-libogg-android/jni/include \
 		deps/gmp/usr/include                      \
 		deps/leveldb/include                      \

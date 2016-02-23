@@ -248,15 +248,18 @@ $(OPENAL_LIB) : $(OPENAL_TIMESTAMP)
 	export CROSS_PREFIX=${CROSS_PREFIX};                                       \
 	export TOOLCHAIN=/tmp/ndk-${TARGET_HOST}-openal;                           \
 	${ANDROID_NDK}/build/tools/make-standalone-toolchain.sh                    \
-	--toolchain=${TARGET_TOOLCHAIN}${COMPILER_VERSION}                        \
+	--toolchain=${TARGET_TOOLCHAIN}${COMPILER_VERSION}                         \
 	--install-dir=$${TOOLCHAIN};                                               \
 	export PATH="$${TOOLCHAIN}/bin:$${PATH}";                                  \
 	export CXX=${CROSS_PREFIX}g++;                                             \
 	export CC=${CROSS_PREFIX}gcc;                                              \
+	export CFLAGS="$${CFLAGS} ${TARGET_CFLAGS_ADDON} -DAL_ALEXT_PROTOTYPES -DAL_BUILD_LIBRARY -DANDROID"; \
+	export CPPFLAGS="$${CPPFLAGS} ${TARGET_CFLAGS_ADDON}";                     \
+	export LDFLAGS="$${LDFLAGS} ${TARGET_LDFLAGS_ADDON}";                      \
 	export TARGET_OS=OS_ANDROID_CROSSCOMPILE;                                  \
 	cmake .. -DCMAKE_TOOLCHAIN_FILE=../XCompile-Android.txt                    \
 		-DHOST=${TARGET_TOOLCHAIN} -DTOOLCHAIN=${TOOLCHAIN}                    \
-		-DALSOFT_EXAMPLES=0 -DALSOFT_UTILS=0 || exit 1;                        \
+		-DALSOFT_EXAMPLES=0 -DALSOFT_UTILS=0 -O3 || exit 1;                    \
 	$(MAKE) -s || exit 1;                                                      \
 	touch ${OPENAL_TIMESTAMP};                                                 \
 	touch ${OPENAL_TIMESTAMP_INT};                                             \
@@ -267,7 +270,7 @@ $(OPENAL_LIB) : $(OPENAL_TIMESTAMP)
 
 clean_openal :
 	$(RM) -rf ${OPENAL_DIR}
-
+	
 $(OGG_TIMESTAMP) : ogg_download
 	@LAST_MODIF=$$(find ${OGG_DIR} -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -f2- -d" "); \
 	if [ $$(basename $$LAST_MODIF) != "timestamp" ] ; then                     \
