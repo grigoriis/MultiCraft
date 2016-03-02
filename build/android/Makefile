@@ -838,9 +838,9 @@ apk: $(PATHCFGFILE) assets $(ICONV_LIB) $(IRRLICHT_LIB) $(CURL_LIB) $(GMP_LIB) $
 	TARGET_CFLAGS+="${TARGET_CFLAGS_ADDON}"                                    \
 	TARGET_LDFLAGS+="${TARGET_LDFLAGS_ADDON}"                                  \
 	TARGET_CXXFLAGS+="${TARGET_CXXFLAGS_ADDON}" &&                             \
-#	ant $$BUILD_TYPE &&                                                        \
-	echo "	Success! =)"                                                \
-#	echo "APK: bin/MultiCraft-$$BUILD_TYPE.apk" &&                               \
+	ant $$BUILD_TYPE &&                                                        \
+	echo "APK: bin/MultiCraft-$$BUILD_TYPE.apk" &&                               \
+echo "	Success! =)"                                                \
 
 prep_srcdir :
 	@if [ ! -e ${ROOT}/jni/src ]; then                                         \
