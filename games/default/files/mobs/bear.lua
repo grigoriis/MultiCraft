@@ -26,6 +26,7 @@
 		knock_back = 1,
 		lava_damage = 10,
 		fall_damage = 5,
+		fear_height = 2,
 		damage = 6,
 		reach = 3,
 		attack_type = "dogfight",
@@ -35,7 +36,7 @@
 		jump = false,
 		drops = {
 			{name = "mobs:meat_raw", chance = 1, min = 3, max = 6},
-			{name = "mobs:leather", chance = 1, min = 1, max = 2}			
+			{name = "mobs:leather", chance = 1, min = 1, max = 2}	
 		},
 		follow = {"mobs:honey", "farming:raspberries", "farming:blueberries", "farming_plus:strawberry_item",
 			"bushes:strawberry", "bushes:blackberry", "bushes:blueberry", "bushes:raspberry",
@@ -78,6 +79,6 @@
 	mobs:spawn_specific("mobs:bear",
 		{"default:dirt", "default:sand", "default:snowblock", "default:dirt_with_snow",  "default:dirt_with_grass"},
 		{"air"},
-		5, 20, 0, 5000, 1, 1, 31000
+		5, 20, 0, 6000, 1, 1, 31000
 	)
 	mobs:register_egg("mobs:bear", "Bear", "wool_brown.png", 1)

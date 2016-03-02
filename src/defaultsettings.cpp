@@ -70,7 +70,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("3d_mode", "none");
 	settings->setDefault("3d_paralax_strength", "0.025");
 	settings->setDefault("aux1_descends", "false");
-	settings->setDefault("doubletap_jump", "true");
+	settings->setDefault("doubletap_jump", "false");
 	settings->setDefault("always_fly_fast", "true");
 	settings->setDefault("directional_colored_fog", "true");
 	settings->setDefault("tooltip_show_delay", "400");
@@ -88,17 +88,16 @@ void set_default_settings(Settings *settings)
 	#else
 	settings->setDefault("show_debug", "true");
 	#endif
-	settings->setDefault("wanted_fps", "20");
+
 	settings->setDefault("fps_max", "60");
 	settings->setDefault("pause_fps_max", "15");
-	// A bit more than the server will send around the player, to make fog blend well
-	settings->setDefault("viewing_range_nodes_max", "240");
-	settings->setDefault("viewing_range_nodes_min", "35");
+	settings->setDefault("viewing_range", "100");
 	settings->setDefault("map_generation_limit", "31000");
 	settings->setDefault("screenW", "800");
 	settings->setDefault("screenH", "600");
 	settings->setDefault("fullscreen", "false");
 	settings->setDefault("fullscreen_bpp", "24");
+	settings->setDefault("screen_dpi", "72");
 	settings->setDefault("fsaa", "0");
 	settings->setDefault("vsync", "false");
 	settings->setDefault("address", "");
@@ -108,7 +107,6 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("enable_fog", "true");
 	settings->setDefault("fov", "72");
 	settings->setDefault("view_bobbing", "true");
-	settings->setDefault("new_style_water", "false");
 	settings->setDefault("leaves_style", "fancy");
 	settings->setDefault("connected_glass", "false");
 	settings->setDefault("smooth_lighting", "true");
@@ -145,7 +143,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("gui_scaling", "1.0");
 	settings->setDefault("gui_scaling_filter", "false");
 	settings->setDefault("gui_scaling_filter_txr2img", "true");
-	settings->setDefault("mouse_sensitivity", "0.05");
+	settings->setDefault("mouse_sensitivity", "0.1");
 	settings->setDefault("enable_sound", "true");
 	settings->setDefault("sound_volume", "1");
 	settings->setDefault("desynchronize_mapblock_texture_animation", "true");
@@ -158,7 +156,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("trilinear_filter", "false");
 	settings->setDefault("texture_clean_transparent", "false");
 	settings->setDefault("texture_min_size", "32");
-	settings->setDefault("preload_item_visuals", "false");
+	settings->setDefault("tone_mapping", "false");
 	settings->setDefault("enable_bumpmapping", "false");
 	settings->setDefault("enable_parallax_occlusion", "false");
 	settings->setDefault("generate_normalmaps", "false");
@@ -179,7 +177,8 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("repeat_rightclick_time", "0.25");
 	settings->setDefault("enable_particles", "true");
 	settings->setDefault("enable_mesh_cache", "false");
-
+	settings->setDefault("enable_vbo", "true");
+	
 	settings->setDefault("enable_minimap", "true");
 	settings->setDefault("minimap_shape_round", "true");
 	settings->setDefault("minimap_double_scan_height", "false");
@@ -205,15 +204,15 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("font_shadow", "1");
 	settings->setDefault("font_shadow_alpha", "128");
 	settings->setDefault("mono_font_path", porting::getDataPath("fonts" DIR_DELIM "liberationmono.ttf"));
-	settings->setDefault("fallback_font_path", porting::getDataPath("fonts" DIR_DELIM "DroidSansFallbackFull.ttf"));
+	settings->setDefault("fallback_font_path", porting::getDataPath("fonts" DIR_DELIM "DroidSansFallback.ttf"));
 
 	settings->setDefault("fallback_font_shadow", "1");
 	settings->setDefault("fallback_font_shadow_alpha", "128");
 
 	std::stringstream fontsize;
-	fontsize << TTF_DEFAULT_FONT_SIZE;
+	fontsize << DEFAULT_FONT_SIZE;
 
-	settings->setDefault("font_size", fontsize.str());
+	settings->setDefault("font_size", "16");
 	settings->setDefault("mono_font_size", fontsize.str());
 	settings->setDefault("fallback_font_size", fontsize.str());
 #else
@@ -246,7 +245,6 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("default_privs", "interact, shout");
 	settings->setDefault("player_transfer_distance", "0");
 	settings->setDefault("enable_pvp", "true");
-	settings->setDefault("vertical_spawn_range", "128");
 	settings->setDefault("disallow_empty_password", "false");
 	settings->setDefault("disable_anticheat", "false");
 	settings->setDefault("enable_rollback_recording", "false");
@@ -285,9 +283,10 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("emergequeue_limit_total", "256");
 	settings->setDefault("emergequeue_limit_diskonly", "32");
 	settings->setDefault("emergequeue_limit_generate", "32");
-	settings->setDefault("num_emerge_threads", "2");
+	settings->setDefault("num_emerge_threads", "1");
 	settings->setDefault("secure.enable_security", "false");
 	settings->setDefault("secure.trusted_mods", "");
+	settings->setDefault("secure.http_mods", "");
 
 	// physics stuff
 	settings->setDefault("movement_acceleration_default", "3");
@@ -329,12 +328,13 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("high_precision_fpu", "true");
 
 	settings->setDefault("language", "");
+	settings->setDefault("mainmenu_last_selected_world", "1");
 
 #ifdef __ANDROID__
 	settings->setDefault("screenW", "0");
 	settings->setDefault("screenH", "0");
-	settings->setDefault("enable_shaders", "false");
 	settings->setDefault("fullscreen", "true");
+	settings->setDefault("enable_shaders", "false");
 	settings->setDefault("video_driver", "ogles1");
 	settings->setDefault("touchtarget", "true");
 	settings->setDefault("TMPFolder","/sdcard/tmp/");
@@ -342,29 +342,34 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("smooth_lighting", "false");
 	settings->setDefault("emergequeue_limit_diskonly", "8");
 	settings->setDefault("emergequeue_limit_generate", "8");
-	settings->setDefault("max_block_generate_distance", "3");
-	settings->setDefault("preload_item_visuals", "false");
-	settings->setDefault("viewing_range_nodes_max", "50");
-	settings->setDefault("viewing_range_nodes_min", "5");
-	settings->setDefault("inventory_image_hack", "true");
-	settings->setDefault("mouse_sensitivity", "0.05");
+	settings->setDefault("max_block_generate_distance", "2");
 	settings->setDefault("enable_3d_clouds", "false");
-	settings->setDefault("wanted_fps", "25");
-	settings->setDefault("fps_max", "35");
+	settings->setDefault("fps_max", "40");
 	settings->setDefault("pause_fps_max", "10");
 	settings->setDefault("max_objects_per_block", "32");
 	settings->setDefault("sqlite_synchronous", "1");
-	settings->setDefault("screen_dpi", "72");
 	settings->setDefault("gui_scaling", "1.1");
 	settings->setDefault("curl_verify_cert","false");
+	settings->setDefault("mouse_sensitivity", "0.15");
+	settings->setDefault("hud_scaling", "0.9");
+	settings->setDefault("viewing_range", "25");
+	settings->setDefault("inventory_image_hack", "false");
+	settings->setDefault("doubletap_jump", "true");
+	settings->setDefault("mono_font_path", "/system/fonts/DroidSansMono.ttf");
+	settings->setDefault("fallback_font_path", "/system/fonts/DroidSans.ttf");
+
 	//check for device with small screen
 	float x_inches = ((double) porting::getDisplaySize().X /
 			(160 * porting::getDisplayDensity()));
-	if (x_inches  < 3.5) {
-		settings->setDefault("hud_scaling", "0.6");
+	if (x_inches < 3.5) {
+		settings->setDefault("hud_scaling", "0.5");
+		settings->setDefault("mouse_sensitivity", "0.1");
+		settings->setDefault("font_size","12");
 	}
-	else if (x_inches < 5) {
-		settings->setDefault("hud_scaling", "0.7");
+	else if (x_inches < 5.5) {
+		settings->setDefault("hud_scaling", "0.6");
+		settings->setDefault("mouse_sensitivity", "0.1");
+		settings->setDefault("font_size","14");
 	}
 #endif
 }

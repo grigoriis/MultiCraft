@@ -38,6 +38,7 @@ mobs:register_mob("mobs:pig", {
 	water_damage = 1,
 	lava_damage = 5,
 	light_damage = 0,
+	fear_height = 2,
 	animation = {
 	 speed_normal = 20,
 	 stand_start = 0,
@@ -56,7 +57,7 @@ mobs:register_mob("mobs:pig", {
 mobs:spawn_specific("mobs:pig",
 		{"default:dirt", "default:sand", "default:snowblock", "default:dirt_with_snow",  "default:dirt_with_grass"},
 		{"air"},
-		0, 20, 0, 4000, 1, -31000, 31000
+		0, 20, 0, 5000, 1, -31000, 31000
 	)
 
 mobs:register_egg("mobs:pig", "Pig", "wool_pink.png", 1)

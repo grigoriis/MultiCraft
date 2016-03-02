@@ -34,6 +34,7 @@ mobs:register_mob("mobs:spider", {
 	water_damage = 5,
 	lava_damage = 5,
 	light_damage = 1,
+	fear_height = 2,
 	animation = {
 		speed_normal = 15,
 		speed_run = 15,
@@ -51,7 +52,7 @@ mobs:register_mob("mobs:spider", {
 	mobs:spawn_specific("mobs:spider",
 		{"default:dirt", "default:sandstone", "default:sand", "default:stone", "default:snowblock", "default:dirt_with_snow",  "default:dirt_with_grass", "default:cobble", "default:mossycobble"},
 		{"air"},
-		0, 5, 0, 4000, 1, -31000, 31000
+		0, 7, 0, 5000, 1, -31000, 31000
 	)
 
 mobs:register_egg("mobs:spider", "Spider", "mobs_cobweb.png", 1)

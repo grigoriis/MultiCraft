@@ -193,7 +193,7 @@ void TouchScreenGUI::initButton(touch_gui_button_id id, rect<s32> button_rect,
 }
 
 static int getMaxControlPadSize(float density) {
-	return 230 * density * g_settings->getFloat("hud_scaling");
+	return 300 * density * g_settings->getFloat("hud_scaling");
 }
 
 int TouchScreenGUI::getGuiButtonSize()
@@ -287,23 +287,23 @@ void TouchScreenGUI::init(ISimpleTextureSource* tsrc)
 					   m_screensize.Y - (button_size),
 					   m_screensize.X,
 					   m_screensize.Y),
-	                  L"inv", true);
+	                  L"inv", false, SLOW_BUTTON_REPEAT);
 
 	/* init drop button */
 	initButton(drop_id,
-	           rect<s32>(m_screensize.X-(0.75*button_size),
-					   m_screensize.Y-(3.5*button_size),
+	           rect<s32>(m_screensize.X-(1*button_size),
+					   m_screensize.Y/2-(2*button_size),
 					   m_screensize.X,
-					   m_screensize.Y-(2.75*button_size)),
-			L"drop", true);
+					   m_screensize.Y/2-(1*button_size)),
+			L"drop", false, SLOW_BUTTON_REPEAT);
 
 	/* init crunch button */
 	initButton(crunch_id,
-			rect<s32>(m_screensize.X-(2.2*button_size),
+			rect<s32>(m_screensize.X-(2*button_size),
 					m_screensize.Y-(0.5*button_size),
-					m_screensize.X-(1.2*button_size),
+					m_screensize.X-(button_size),
 					m_screensize.Y),
-			L"H",false);
+			L"H", false, SLOW_BUTTON_REPEAT);
 
 /*#ifdef ENABLE_ANDROID_NOCLIP
 	 // init fly button 
@@ -346,24 +346,21 @@ void TouchScreenGUI::init(ISimpleTextureSource* tsrc)
 
 	/* init chat button */
 	initButton(chat_id,
-			rect<s32>(m_screensize.X - (0.75*button_size), 0,
-					m_screensize.X, 0.75*button_size),
-			L"Chat", true);
+			rect<s32>(m_screensize.X - (button_size), 0,
+					m_screensize.X, button_size),
+			L"Chat", false, SLOW_BUTTON_REPEAT);
 
-	/* init camera button 
+	/* init rangeselect button */
+	initButton(range_id,					
+					rect<s32>(m_screensize.X - (2*button_size), 0,
+					m_screensize.X - (button_size), button_size),
+			L"far", false, SLOW_BUTTON_REPEAT);
+	
+		/* init camera button 
 	initButton(camera_id,
 			rect<s32>(0, 0,
 					0.75*button_size, 0.75*button_size),
 			L"cam", false, SLOW_BUTTON_REPEAT);*/
-
-	/* init rangeselect button */
-	initButton(range_id,
-			/*rect<s32>(m_screensize.X - (0.75*button_size), 0,
-					m_screensize.X, 0.75*button_size),*/
-					
-					rect<s32>(m_screensize.X - (1.5*button_size), 0,
-					m_screensize.X - (0.75*button_size), 0.75*button_size),
-			L"far", false, SLOW_BUTTON_REPEAT);
 }
 
 touch_gui_button_id TouchScreenGUI::getButtonID(s32 x, s32 y)
@@ -643,7 +640,7 @@ void TouchScreenGUI::translateEvent(const SEvent &event)
 					s32 dy = Y - m_pointerpos[event.TouchInput.ID].Y;
 
 					/* adapt to similar behaviour as pc screen */
-					double d         = g_settings->getFloat("mouse_sensitivity") *4;
+					double d         = g_settings->getFloat("mouse_sensitivity") ;
 					double old_yaw   = m_camera_yaw;
 					double old_pitch = m_camera_pitch;
 

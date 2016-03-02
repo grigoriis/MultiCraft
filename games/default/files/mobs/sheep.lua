@@ -38,6 +38,7 @@ for _, col in ipairs(all_colours) do
 		water_damage = 1,
 		lava_damage = 5,
 		light_damage = 0,
+		fear_height = 2,
 		animation = {
 			speed_normal = 15,
 			speed_run = 15,
@@ -137,5 +138,5 @@ end
 mobs:spawn_specific("mobs:sheep_white",
 		{"default:dirt", "default:sand", "default:snowblock", "default:dirt_with_snow",  "default:dirt_with_grass"},
 		{"air"},
-		0, 20, 0, 4000, 1, -31000, 31000
+		0, 20, 0, 5000, 1, -31000, 31000
 	)

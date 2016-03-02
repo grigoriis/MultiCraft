@@ -21,7 +21,7 @@ TARGET_HOST2 = arm-linux
 TARGET_ABI = armeabi-v7a-hard
 TARGET_LIBDIR = armeabi-v7a
 TARGET_TOOLCHAIN = arm-linux-androideabi-
-TARGET_CFLAGS_ADDON = -D_NDK_MATH_NO_SOFTFP=1 -mfloat-abi=hard -Ofast -march=armv7-a
+TARGET_CFLAGS_ADDON = -mfpu=vfpv3-d16 -D_NDK_MATH_NO_SOFTFP=1 -mfloat-abi=hard -march=armv7-a -Ofast
 TARGET_CXXFLAGS_ADDON = $(TARGET_CFLAGS_ADDON)
 TARGET_LDFLAGS_ADDON = -Wl,--no-warn-mismatch -lm_hard
 TARGET_ARCH = armv7
@@ -70,6 +70,7 @@ LEVELDB_LIB = $(LEVELDB_DIR)libleveldb.a
 LEVELDB_TIMESTAMP = $(LEVELDB_DIR)/timestamp
 LEVELDB_TIMESTAMP_INT = $(ROOT)/deps/leveldb_timestamp
 LEVELDB_URL_GIT = https://github.com/google/leveldb
+LEVELDB_COMMIT = 2d0320a458d0e6a20fff46d5f80b18bfdcce7018
 
 OPENAL_DIR = $(ROOT)/deps/openal-soft/
 OPENAL_LIB = $(OPENAL_DIR)libs/$(TARGET_ABI)/libopenal.so
@@ -120,11 +121,12 @@ GMP_TIMESTAMP = $(GMP_DIR)/timestamp
 GMP_TIMESTAMP_INT = $(ROOT)/deps/gmp_timestamp
 GMP_URL_HTTP = https://gmplib.org/download/gmp/gmp-$(GMP_VERSION).tar.bz2
 
-FREETYPE_DIR = $(ROOT)/deps/freetype2-android/
-FREETYPE_LIB = $(FREETYPE_DIR)/Android/obj/local/$(TARGET_ABI)/libfreetype2-static.a
-FREETYPE_TIMESTAMP = $(FREETYPE_DIR)timestamp
+FREETYPE_VERSION = 2.6.2
+FREETYPE_DIR = $(ROOT)/deps/freetype-$(FREETYPE_VERSION)
+FREETYPE_LIB = $(FREETYPE_DIR)/objs/.libs/libfreetype.a
+FREETYPE_TIMESTAMP = $(FREETYPE_DIR)/timestamp
 FREETYPE_TIMESTAMP_INT = $(ROOT)/deps/freetype_timestamp
-FREETYPE_URL_GIT = https://github.com/cdave1/freetype2-android
+FREETYPE_URL_HTTP = http://sourceforge.net/projects/freetype/files/freetype2/2.6.2/freetype-$(FREETYPE_VERSION).tar.bz2
 
 ICONV_VERSION = 1.14
 ICONV_DIR = $(ROOT)/deps/libiconv/
@@ -133,7 +135,7 @@ ICONV_TIMESTAMP = $(ICONV_DIR)timestamp
 ICONV_TIMESTAMP_INT = $(ROOT)/deps/iconv_timestamp
 ICONV_URL_HTTP = http://ftp.gnu.org/pub/gnu/libiconv/libiconv-$(ICONV_VERSION).tar.gz
 
-SQLITE3_FOLDER = sqlite-amalgamation-3100200
+SQLITE3_FOLDER = sqlite-amalgamation-3110000
 SQLITE3_URL = http://www.sqlite.org/2016/$(SQLITE3_FOLDER).zip
 
 ################################################################################
@@ -423,6 +425,8 @@ leveldb_download :
 		mkdir -p ${ROOT}/deps;                                                 \
 		cd ${ROOT}/deps ;                                                      \
 		git clone ${LEVELDB_URL_GIT} || exit 1;                                \
+		cd ${LEVELDB_DIR} || exit 1;                                           \
+		git checkout ${LEVELDB_COMMIT} || exit 1;                              \
 	fi
 
 leveldb : $(LEVELDB_LIB)
@@ -470,17 +474,20 @@ $(FREETYPE_TIMESTAMP) : freetype_download
 	fi
 
 freetype_download :
-	@if [ ! -d ${FREETYPE_DIR} ] ; then                                        \
-		echo "freetype sources missing, downloading...";                       \
-		mkdir -p ${ROOT}/deps;                                                 \
-		cd deps;                                                               \
-		git clone ${FREETYPE_URL_GIT} || exit 1;                               \
+	@if [ ! -d "${FREETYPE_DIR}" ] ; then                                       \
+		echo "freetype sources missing, downloading...";                        \
+		mkdir -p ${ROOT}/deps;                                                  \
+		cd deps;                                                                \
+		wget ${FREETYPE_URL_HTTP} || exit 1;                                    \
+		tar -xjf freetype-${FREETYPE_VERSION}.tar.bz2 || exit 1;                \
+		rm freetype-${FREETYPE_VERSION}.tar.bz2;                                \
+		ln -s freetype-${FREETYPE_VERSION} freetype;                            \
 	fi
 
 freetype : $(FREETYPE_LIB)
 
 $(FREETYPE_LIB) : $(FREETYPE_TIMESTAMP)
-	+ @REFRESH=0;                                                                \
+	+ @REFRESH=0;                                                              \
 	if [ ! -e ${FREETYPE_TIMESTAMP_INT} ] ; then                               \
 		REFRESH=1;                                                             \
 	fi;                                                                        \
@@ -494,21 +501,36 @@ $(FREETYPE_LIB) : $(FREETYPE_TIMESTAMP)
 	mkdir -p ${FREETYPE_DIR};                                                  \
 	export PATH=$$PATH:${SDKFOLDER}/platform-tools:${ANDROID_NDK};             \
 	echo "changed timestamp for freetype detected building...";                \
-	cd ${FREETYPE_DIR}/Android/jni;                                            \
-	ndk-build NDEBUG=${NDEBUG} NDK_MODULE_PATH=${NDK_MODULE_PATH}              \
-	APP_PLATFORM=${APP_PLATFORM} APP_ABI=${TARGET_ABI}                         \
-	TARGET_CFLAGS+="${TARGET_CFLAGS_ADDON}"                                    \
-	TARGET_LDFLAGS+="${TARGET_LDFLAGS_ADDON}"                                  \
-	TARGET_CXXFLAGS+="${TARGET_CXXFLAGS_ADDON}" || exit 1;                     \
+	cd deps/freetype-${FREETYPE_VERSION};                                      \
+	export CROSS_PREFIX=${CROSS_PREFIX};                                       \
+	export TOOLCHAIN=/tmp/ndk-${TARGET_HOST}-freetype;                         \
+	${ANDROID_NDK}/build/tools/make-standalone-toolchain.sh                    \
+	--toolchain=${TARGET_TOOLCHAIN}${COMPILER_VERSION}                         \
+	--install-dir=$${TOOLCHAIN};                                               \
+	export PATH="$${TOOLCHAIN}/bin:$${PATH}";                                  \
+	export CXX=${CROSS_PREFIX}g++;                                             \
+	export CC=${CROSS_PREFIX}gcc;                                              \
+	export AR=${CROSS_PREFIX}ar;                                               \
+	export LD=${CROSS_PREFIX}ld;                                               \
+	export AS=${CROSS_PREFIX}as;                                               \
+	export NM=${CROSS_PREFIX}nm;                                               \
+	export STRIP=${CROSS_PREFIX}strip;                                         \
+	export RANLIB=${CROSS_PREFIX}ranlib;                                       \
+	export OBJDUMP=${CROSS_PREFIX}objdump;                                     \
+	export TARGET_OS=OS_ANDROID_CROSSCOMPILE;                                  \
+	CC=${CROSS_PREFIX}gcc ./configure  --host=${TARGET_HOST}-androideabi       \
+		--prefix=${TOOLCHAIN} --with-png=no --with-harfbuzz=no || exit 1;      \
+	CC=${CROSS_PREFIX}gcc ANDROID_DEV=/tmp/ndk-${TARGET_HOST}-freetype make || exit 1; \
+#	$(MAKE) -s || exit 1;                                                      \
 	touch ${FREETYPE_TIMESTAMP};                                               \
 	touch ${FREETYPE_TIMESTAMP_INT};                                           \
+	$(RM) -rf $${TOOLCHAIN};                                                   \
 	else                                                                       \
 		echo "nothing to be done for freetype";                                \
 	fi
 
 clean_freetype :
 	$(RM) -rf ${FREETYPE_DIR}
-
 
 $(ICONV_TIMESTAMP) : iconv_download
 	@LAST_MODIF=$$(find ${ICONV_DIR} -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -f2- -d" "); \
@@ -586,6 +608,7 @@ irrlicht_download :
 		patch -p1 < ../../irrlicht-touchcount.patch || exit 1;                 \
 		patch -p1 < ../../irrlicht-back_button.patch || exit 1;                \
 		patch -p1 < ../../irrlicht-texturehack.patch || exit 1;                \
+		patch -p1 < ../../irrlicht-optimization.patch || exit 1;                \
 	fi
 
 $(IRRLICHT_TIMESTAMP) : irrlicht_download
@@ -797,14 +820,14 @@ assets : $(ASSETS_TIMESTAMP)
 	if [ $$REFRESH -ne 0 ] ; then                                              \
 	echo "assets changed, refreshing...";                                      \
 	$(MAKE) clean_assets;                                                      \
-	mkdir -p ${ROOT}/assets/MultiCraft;                                          \
-	cp ${ROOT}/../../multicraft.conf.example ${ROOT}/assets/MultiCraft;            \
-	cp ${ROOT}/../../README.md ${ROOT}/assets/MultiCraft;                       \
-	cp -r ${ROOT}/../../builtin ${ROOT}/assets/MultiCraft;                       \
-	mkdir ${ROOT}/assets/MultiCraft/fonts;                                       \
-	cp -r ${ROOT}/../../fonts/*.ttf ${ROOT}/assets/MultiCraft/fonts/;            \
-	cp -r ${ROOT}/../../games ${ROOT}/assets/MultiCraft;                        \
-	cp -r ${ROOT}/../../textures ${ROOT}/assets/MultiCraft;                       \
+	mkdir -p ${ROOT}/assets/MultiCraft;                                        \
+	cp ${ROOT}/../../multicraft.conf.example ${ROOT}/assets/MultiCraft;        \
+	cp ${ROOT}/../../README.md ${ROOT}/assets/MultiCraft;                      \
+	cp -r ${ROOT}/../../builtin ${ROOT}/assets/MultiCraft;                     \
+	mkdir ${ROOT}/assets/MultiCraft/fonts;                                     \
+	cp -r ${ROOT}/../../fonts/basis33.ttf ${ROOT}/assets/MultiCraft/fonts/;    \
+	cp -r ${ROOT}/../../games ${ROOT}/assets/MultiCraft;                       \
+	cp -r ${ROOT}/../../textures ${ROOT}/assets/MultiCraft;                    \
 	cd ${ROOT}/assets ||  exit 1;                                              \
 	find . -name "timestamp" -exec rm {} \; ;                                  \
 	find . -name "*.blend" -exec rm {} \; ;                                    \
@@ -813,7 +836,7 @@ assets : $(ASSETS_TIMESTAMP)
 	find . -type d -path "*.svn" -exec rm -rf {} \; ;                          \
 	find . -type f -path "*.gitignore" -exec rm -rf {} \; ;                    \
 	ls -R | grep ":$$" | sed -e 's/:$$//' -e 's/\.//' -e 's/^\///' > "index.txt"; \
-	find MultiCraft >"filelist.txt";                                             \
+	find MultiCraft >"filelist.txt";                                           \
 	cp ${ROOT}/${ASSETS_TIMESTAMP} ${ROOT}/${ASSETS_TIMESTAMP}.old;            \
 	echo "Creating Files.zip";						   \
 	zip -r Files.zip MultiCraft;						   \

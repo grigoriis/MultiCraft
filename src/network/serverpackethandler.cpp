@@ -185,8 +185,8 @@ void Server::handleCommand_Init(NetworkPacket* pkt)
 
 	std::string legacyPlayerNameCasing = playerName;
 
-	if (!isSingleplayer() && strcasecmp(playername, "singleplayer") == 0) {
-		actionstream << "Server: Player with the name \"singleplayer\" "
+	if (!isSingleplayer() && strcasecmp(playername, "Player") == 0) {
+		actionstream << "Server: Player with the name \"Player\" "
 				<< "tried to connect from " << addr_s << std::endl;
 		DenyAccess(pkt->getPeerId(), SERVER_ACCESSDENIED_WRONG_NAME);
 		return;
@@ -475,8 +475,8 @@ void Server::handleCommand_Init_Legacy(NetworkPacket* pkt)
 		return;
 	}
 
-	if (!isSingleplayer() && strcasecmp(playername, "singleplayer") == 0) {
-		actionstream << "Server: Player with the name \"singleplayer\" "
+	if (!isSingleplayer() && strcasecmp(playername, "Player") == 0) {
+		actionstream << "Server: Player with the name \"Player\" "
 				<< "tried to connect from " << addr_s << std::endl;
 		DenyAccess_Legacy(pkt->getPeerId(), L"Name is not allowed");
 		return;
@@ -762,14 +762,14 @@ void Server::handleCommand_GotBlocks(NetworkPacket* pkt)
 
 	RemoteClient *client = getClient(pkt->getPeerId());
 
-	for (u16 i = 0; i < count; i++) {
-		if ((s16)pkt->getSize() < 1 + (i + 1) * 6)
-			throw con::InvalidIncomingDataException
+	if ((s16)pkt->getSize() < 1 + (int)count * 6) {
+		throw con::InvalidIncomingDataException
 				("GOTBLOCKS length is too short");
+	}
+
+	for (u16 i = 0; i < count; i++) {
 		v3s16 p;
-
 		*pkt >> p;
-
 		client->GotBlock(p);
 	}
 }
@@ -865,13 +865,14 @@ void Server::handleCommand_DeletedBlocks(NetworkPacket* pkt)
 
 	RemoteClient *client = getClient(pkt->getPeerId());
 
-	for (u16 i = 0; i < count; i++) {
-		if ((s16)pkt->getSize() < 1 + (i + 1) * 6)
-			throw con::InvalidIncomingDataException
+	if ((s16)pkt->getSize() < 1 + (int)count * 6) {
+		throw con::InvalidIncomingDataException
 				("DELETEDBLOCKS length is too short");
+	}
+
+	for (u16 i = 0; i < count; i++) {
 		v3s16 p;
 		*pkt >> p;
-
 		client->SetBlockNotSent(p);
 	}
 }

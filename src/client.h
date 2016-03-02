@@ -50,6 +50,7 @@ struct PointedThing;
 class Database;
 class Mapper;
 struct MinimapMapblock;
+class Camera;
 
 struct QueuedMeshUpdate
 {
@@ -507,6 +508,12 @@ public:
 	Mapper* getMapper ()
 	{ return m_mapper; }
 
+	void setCamera(Camera* camera)
+	{ m_camera = camera; }
+
+	Camera* getCamera ()
+	{ return m_camera; }
+
 	bool isMinimapDisabledByServer()
 	{ return m_minimap_disabled_by_server; }
 
@@ -589,6 +596,7 @@ private:
 	ParticleManager m_particle_manager;
 	con::Connection m_con;
 	IrrlichtDevice *m_device;
+	Camera *m_camera;
 	Mapper *m_mapper;
 	bool m_minimap_disabled_by_server;
 	// Server serialization version
@@ -677,6 +685,7 @@ private:
 	// TODO: Add callback to update these when g_settings changes
 	bool m_cache_smooth_lighting;
 	bool m_cache_enable_shaders;
+	bool m_cache_use_tangent_vertices;
 
 	DISABLE_CLASS_COPY(Client);
 };

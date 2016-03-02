@@ -304,7 +304,7 @@ PointedThing getPointedThing(Client *client, Hud *hud, const v3f &player_positio
 	INodeDefManager *nodedef = client->getNodeDefManager();
 	ClientMap &map = client->getEnv().getClientMap();
 
-	f32 mindistance = BS * 1001;
+	f32 min_distance = BS * 1001;
 
 	// First try to find a pointed at active object
 	if (look_for_object) {
@@ -324,7 +324,7 @@ PointedThing getPointedThing(Client *client, Hud *hud, const v3f &player_positio
 				hud->setSelectionPos(pos, camera_offset);
 			}
 
-			mindistance = (selected_object->getPosition() - camera_position).getLength();
+			min_distance = (selected_object->getPosition() - camera_position).getLength();
 
 			result.type = POINTEDTHING_OBJECT;
 			result.object_id = selected_object->getId();
@@ -333,14 +333,13 @@ PointedThing getPointedThing(Client *client, Hud *hud, const v3f &player_positio
 
 	// That didn't work, try to find a pointed at node
 
-
 	v3s16 pos_i = floatToInt(player_position, BS);
 
 	/*infostream<<"pos_i=("<<pos_i.X<<","<<pos_i.Y<<","<<pos_i.Z<<")"
 			<<std::endl;*/
 
 	s16 a = d;
-	s16 ystart = pos_i.Y + 0 - (camera_direction.Y < 0 ? a : 1);
+	s16 ystart = pos_i.Y - (camera_direction.Y < 0 ? a : 1);
 	s16 zstart = pos_i.Z - (camera_direction.Z < 0 ? a : 1);
 	s16 xstart = pos_i.X - (camera_direction.X < 0 ? a : 1);
 	s16 yend = pos_i.Y + 1 + (camera_direction.Y > 0 ? a : 1);
@@ -357,24 +356,25 @@ PointedThing getPointedThing(Client *client, Hud *hud, const v3f &player_positio
 	if (xend == 32767)
 		xend = 32766;
 
-	for (s16 y = ystart; y <= yend; y++)
-		for (s16 z = zstart; z <= zend; z++)
+	v3s16 pointed_pos(0, 0, 0);
+
+	for (s16 y = ystart; y <= yend; y++) {
+		for (s16 z = zstart; z <= zend; z++) {
 			for (s16 x = xstart; x <= xend; x++) {
 				MapNode n;
 				bool is_valid_position;
 
 				n = map.getNodeNoEx(v3s16(x, y, z), &is_valid_position);
-				if (!is_valid_position)
+				if (!is_valid_position) {
 					continue;
-
-				if (!isPointableNode(n, client, liquids_pointable))
+				}
+				if (!isPointableNode(n, client, liquids_pointable)) {
 					continue;
-
+				}
 				std::vector<aabb3f> boxes = n.getSelectionBoxes(nodedef);
 
 				v3s16 np(x, y, z);
 				v3f npf = intToFloat(np, BS);
-
 				for (std::vector<aabb3f>::const_iterator
 						i = boxes.begin();
 						i != boxes.end(); ++i) {
@@ -382,62 +382,80 @@ PointedThing getPointedThing(Client *client, Hud *hud, const v3f &player_positio
 					box.MinEdge += npf;
 					box.MaxEdge += npf;
 
-					for (u16 j = 0; j < 6; j++) {
-						v3s16 facedir = g_6dirs[j];
-						aabb3f facebox = box;
-
-						f32 d = 0.001 * BS;
-
-						if (facedir.X > 0)
-							facebox.MinEdge.X = facebox.MaxEdge.X - d;
-						else if (facedir.X < 0)
-							facebox.MaxEdge.X = facebox.MinEdge.X + d;
-						else if (facedir.Y > 0)
-							facebox.MinEdge.Y = facebox.MaxEdge.Y - d;
-						else if (facedir.Y < 0)
-							facebox.MaxEdge.Y = facebox.MinEdge.Y + d;
-						else if (facedir.Z > 0)
-							facebox.MinEdge.Z = facebox.MaxEdge.Z - d;
-						else if (facedir.Z < 0)
-							facebox.MaxEdge.Z = facebox.MinEdge.Z + d;
-
-						v3f centerpoint = facebox.getCenter();
-						f32 distance = (centerpoint - camera_position).getLength();
-
-						if (distance >= mindistance)
-							continue;
-
-						if (!facebox.intersectsWithLine(shootline))
-							continue;
-
-						v3s16 np_above = np + facedir;
-
-						result.type = POINTEDTHING_NODE;
-						result.node_undersurface = np;
-						result.node_abovesurface = np_above;
-						mindistance = distance;
-
-						selectionboxes->clear();
-						for (std::vector<aabb3f>::const_iterator
-								i2 = boxes.begin();
-								i2 != boxes.end(); ++i2) {
-							aabb3f box = *i2;
-							box.MinEdge += v3f(-d, -d, -d);
-							box.MaxEdge += v3f(d, d, d);
-							selectionboxes->push_back(box);
-						}
-						hud->setSelectionPos(npf, camera_offset);
+					v3f centerpoint = box.getCenter();
+					f32 distance = (centerpoint - camera_position).getLength();
+					if (distance >= min_distance) {
+						continue;
 					}
+					if (!box.intersectsWithLine(shootline)) {
+						continue;
+					}
+					result.type = POINTEDTHING_NODE;
+					min_distance = distance;
+					pointed_pos = np;
 				}
-			} // for coords
+			}
+		}
+	}
+
+	if (result.type == POINTEDTHING_NODE) {
+		f32 d = 0.001 * BS;
+		MapNode n = map.getNodeNoEx(pointed_pos);
+		v3f npf = intToFloat(pointed_pos, BS);
+		std::vector<aabb3f> boxes = n.getSelectionBoxes(nodedef);
+		f32 face_min_distance = 1000 * BS;
+		for (std::vector<aabb3f>::const_iterator
+				i = boxes.begin();
+				i != boxes.end(); ++i) {
+			aabb3f box = *i;
+			box.MinEdge += npf;
+			box.MaxEdge += npf;
+			for (u16 j = 0; j < 6; j++) {
+				v3s16 facedir = g_6dirs[j];
+				aabb3f facebox = box;
+				if (facedir.X > 0) {
+					facebox.MinEdge.X = facebox.MaxEdge.X - d;
+				} else if (facedir.X < 0) {
+					facebox.MaxEdge.X = facebox.MinEdge.X + d;
+				} else if (facedir.Y > 0) {
+					facebox.MinEdge.Y = facebox.MaxEdge.Y - d;
+				} else if (facedir.Y < 0) {
+					facebox.MaxEdge.Y = facebox.MinEdge.Y + d;
+				} else if (facedir.Z > 0) {
+					facebox.MinEdge.Z = facebox.MaxEdge.Z - d;
+				} else if (facedir.Z < 0) {
+					facebox.MaxEdge.Z = facebox.MinEdge.Z + d;
+				}
+				v3f centerpoint = facebox.getCenter();
+				f32 distance = (centerpoint - camera_position).getLength();
+				if (distance >= face_min_distance)
+					continue;
+				if (!facebox.intersectsWithLine(shootline))
+					continue;
+				result.node_abovesurface = pointed_pos + facedir;
+				face_min_distance = distance;
+			}
+		}
+		selectionboxes->clear();
+		for (std::vector<aabb3f>::const_iterator
+				i = boxes.begin();
+				i != boxes.end(); ++i) {
+			aabb3f box = *i;
+			box.MinEdge += v3f(-d, -d, -d);
+			box.MaxEdge += v3f(d, d, d);
+			selectionboxes->push_back(box);
+		}
+		hud->setSelectionPos(intToFloat(pointed_pos, BS), camera_offset);
+		result.node_undersurface = pointed_pos;
+	}
 
 	// Update selection mesh light level and vertex colors
 	if (selectionboxes->size() > 0) {
 		v3f pf = hud->getSelectionPos();
-		v3s16 p = floatToInt(pf, BS);  
+		v3s16 p = floatToInt(pf, BS);
 
 		// Get selection mesh light level
-		MapNode n = map.getNodeNoEx(p);	
+		MapNode n = map.getNodeNoEx(p);
 		u16 node_light = getInteriorLight(n, -1, nodedef);
 		u16 light_level = node_light;
 
@@ -907,15 +925,18 @@ public:
 		services->setPixelShaderConstant("yawVec", (irr::f32 *)&minimap_yaw_vec, 3);
 
 		// Uniform sampler layers
-		int layer0 = 0;
-		int layer1 = 1;
-		int layer2 = 2;
 		// before 1.8 there isn't a "integer interface", only float
 #if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR < 8)
+		f32 layer0 = 0;
+		f32 layer1 = 1;
+		f32 layer2 = 2;
 		services->setPixelShaderConstant("baseTexture" , (irr::f32 *)&layer0, 1);
 		services->setPixelShaderConstant("normalTexture" , (irr::f32 *)&layer1, 1);
 		services->setPixelShaderConstant("textureFlags" , (irr::f32 *)&layer2, 1);
 #else
+		s32 layer0 = 0;
+		s32 layer1 = 1;
+		s32 layer2 = 2;
 		services->setPixelShaderConstant("baseTexture" , (irr::s32 *)&layer0, 1);
 		services->setPixelShaderConstant("normalTexture" , (irr::s32 *)&layer1, 1);
 		services->setPixelShaderConstant("textureFlags" , (irr::s32 *)&layer2, 1);
@@ -1071,11 +1092,9 @@ static inline void create_formspec_menu(GUIFormSpecMenu **cur_formspec,
 }
 
 #ifdef __ANDROID__
-#   define SIZE_TAG "size[11,5.5]"
-#   define PAUSE_MENU_SIZE_TAG "size[5,3.5]"
+#define SIZE_TAG "size[11,5.5]"
 #else
-#   define SIZE_TAG "size[11,5.5,true]" // Fixed size on desktop
-#   define PAUSE_MENU_SIZE_TAG "size[11,5.5,true]" // Fixed size on desktop
+#define SIZE_TAG "size[11,5.5,true]" // Fixed size on desktop
 #endif
 
 static void show_chat_menu(GUIFormSpecMenu **cur_formspec,
@@ -1126,63 +1145,29 @@ static void show_pause_menu(GUIFormSpecMenu **cur_formspec,
 		IWritableTextureSource *tsrc, IrrlichtDevice *device,
 		bool singleplayermode)
 {
-#ifdef __ANDROID__
-//  std::string control_text = wide_to_narrow(wstrgettext("Default Controls:\n"
-//                 "No menu visible:\n"
-//                 "- single tap: button activate\n"
-//                 "- double tap: place/use\n"
-//                 "- slide finger: look around\n"
-//                 "Menu/Inventory visible:\n"
-//                 "- double tap (outside):\n"
-//                 " -->close\n"
-//                 "- touch stack, touch slot:\n"
-//                 " --> move stack\n"
-//                 "- touch&drag, tap 2nd finger\n"
-//                 " --> place single item to slot\n"
-//                               ));
-#else
-	std::string control_text = strgettext("Default Controls:\n"
-				   "- WASD: move\n"
-				   "- Space: jump/climb\n"
-				   "- Shift: sneak/go down\n"
-				   "- Q: drop item\n"
-				   "- I: inventory\n"
-				   "- Mouse: turn/look\n"
-				   "- Mouse left: dig/punch\n"
-				   "- Mouse right: place/use\n"
-				   "- Mouse wheel: select item\n"
-				   "- T: chat\n"
-								 );
-#endif
 
 	float ypos = singleplayermode ? 0.5 : 0.1;
 	std::ostringstream os;
-
-	os << FORMSPEC_VERSION_STRING  << PAUSE_MENU_SIZE_TAG
-	   << "button_exit[1," << (ypos++) << ";3,0.5;btn_continue;"
-	   << strgettext("Continue") << "]";
+	os << FORMSPEC_VERSION_STRING  << SIZE_TAG
+		<< "bgcolor[#00000060;true]"
+		<< "button_exit[4," << (ypos++) << ";3,0.5;btn_continue;"
+		<< strgettext("Continue") << "]";
 
 	if (!singleplayermode) {
-		os << "button_exit[1," << (ypos++) << ";3,0.5;btn_change_password;"
+		os << "button_exit[4," << (ypos++) << ";3,0.5;btn_change_password;"
 		   << strgettext("Change Password") << "]";
 	}
 
 #ifndef __ANDROID__
-	os		<< "button_exit[1," << (ypos++) << ";3,0.5;btn_sound;"
+	os		<< "button_exit[4," << (ypos++) << ";3,0.5;btn_sound;"
 			<< strgettext("Sound Volume") << "]";
-	os		<< "button_exit[1," << (ypos++) << ";3,0.5;btn_key_config;"
+	os		<< "button_exit[4," << (ypos++) << ";3,0.5;btn_key_config;"
 			<< strgettext("Change Keys")  << "]";
 #endif
-	os		<< "button_exit[1," << (ypos++) << ";3,0.5;btn_exit_menu;"
+	os		<< "button_exit[4," << (ypos++) << ";3,0.5;btn_exit_menu;"
 			<< strgettext("Exit to Menu") << "]";
-	os		<< "button_exit[1," << (ypos++) << ";3,0.5;btn_exit_os;"
+	os		<< "button_exit[4," << (ypos++) << ";3,0.5;btn_exit_os;"
 			<< strgettext("Close game")   << "]"
-#ifndef __ANDROID__			
-			<< "textarea[7.5,0.25;3.9,6.25;;" << control_text << ";]"
-			<< "textarea[0.4,0.25;3.5,6;;" << PROJECT_NAME_C "\n"
-			<< g_build_info << "\n"
-			<< "path_user = " << wrap_rows(porting::path_user, 20)
-#endif
 			<< "\n;]";
 
 	/* Create menu */
@@ -2090,6 +2075,7 @@ bool Game::createClient(const std::string &playername,
 	camera = new Camera(smgr, *draw_control, gamedef);
 	if (!camera || !camera->successfullyCreated(*error_message))
 		return false;
+	client->setCamera(camera);
 
 	/* Clouds
 	 */
@@ -2638,7 +2624,7 @@ void Game::processUserInput(VolatileRunFlags *flags,
 #endif
 
 	// Increase timer for double tap of "keymap_jump"
-	if (m_cache_doubletap_jump && runData->jump_timer <= 0.2)
+	if (m_cache_doubletap_jump && runData->jump_timer <= 0.15)
 		runData->jump_timer += dtime;
 
 	processKeyboardInput(
@@ -2848,7 +2834,7 @@ void Game::toggleFreeMove(float *statustext_time)
 
 void Game::toggleFreeMoveAlt(float *statustext_time, float *jump_timer)
 {
-	if (m_cache_doubletap_jump && *jump_timer < 0.2f)
+	if (m_cache_doubletap_jump && *jump_timer < 0.15f)
 		toggleFreeMove(statustext_time);
 }
 
@@ -3044,10 +3030,10 @@ void Game::toggleProfiler(float *statustext_time, u32 *profiler_current_page,
 
 void Game::increaseViewRange(float *statustext_time)
 {
-	s16 range = g_settings->getS16("viewing_range_nodes_min");
+	s16 range = g_settings->getS16("viewing_range");
 	s16 range_new = range + 10;
-	g_settings->set("viewing_range_nodes_min", itos(range_new));
-	statustext = utf8_to_wide("Minimum viewing range changed to "
+	g_settings->set("viewing_range", itos(range_new));
+	statustext = utf8_to_wide("Viewing range changed to "
 			+ itos(range_new));
 	*statustext_time = 0;
 }
@@ -3055,14 +3041,14 @@ void Game::increaseViewRange(float *statustext_time)
 
 void Game::decreaseViewRange(float *statustext_time)
 {
-	s16 range = g_settings->getS16("viewing_range_nodes_min");
+	s16 range = g_settings->getS16("viewing_range");
 	s16 range_new = range - 10;
 
-	if (range_new < 0)
-		range_new = range;
+	if (range_new < 20)
+		range_new = 20;
 
-	g_settings->set("viewing_range_nodes_min", itos(range_new));
-	statustext = utf8_to_wide("Minimum viewing range changed to "
+	g_settings->set("viewing_range", itos(range_new));
+	statustext = utf8_to_wide("Viewing range changed to "
 			+ itos(range_new));
 	*statustext_time = 0;
 }
@@ -3700,17 +3686,11 @@ void Game::handlePointingAtNode(GameRunData *runData,
 		runData->noplace_delay_timer = 1.0;
 	}
 
-#ifdef HAVE_TOUCHSCREENGUI
 	bool place = (input->getRightClicked() || input->getLeftReleased() ||
 				  runData->repeat_rightclick_timer >= m_repeat_right_click_time) &&
 				  client->checkPrivilege("interact");
 	place &= !digging;
 	place &= runData->noplace_delay_timer <= 0.0;
-#else
-	bool place = (input->getRightClicked() ||
-				  runData->repeat_rightclick_timer >= m_repeat_right_click_time) &&
-				  client->checkPrivilege("interact");
-#endif
 
 	if (place) {
 		runData->repeat_rightclick_timer = 0;
@@ -3955,12 +3935,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats,
 	if (draw_control->range_all) {
 		runData->fog_range = 100000 * BS;
 	} else {
-		runData->fog_range = draw_control->wanted_range * BS
-				+ 0.0 * MAP_BLOCKSIZE * BS;
-		runData->fog_range = MYMIN(
-				runData->fog_range,
-				(draw_control->farthest_drawn + 20) * BS);
-		runData->fog_range *= 0.9;
+		runData->fog_range = 0.9 * draw_control->wanted_range * BS;
 	}
 
 	/*

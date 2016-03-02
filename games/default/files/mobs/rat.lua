@@ -7,7 +7,7 @@ mobs:register_mob("mobs:rat", {
 	hp_min = 1,
 	hp_max = 4,
 	armor = 100,
-	collisionbox = {-0.2, -1, -0.2, 0.2, -0.8, 0.2},
+	collisionbox = {-0.25, -1, -0.25, 0.25, -0.8, 0.25},
 	visual = "mesh",
 	mesh = "mobs_rat.b3d",
 	textures = {
@@ -29,12 +29,13 @@ mobs:register_mob("mobs:rat", {
 	water_damage = 0,
 	lava_damage = 4,
 	light_damage = 0,
+	fear_height = 2,
 })
 
 mobs:spawn_specific("mobs:rat",
 		{"default:dirt", "default:sandstone", "default:sand", "default:stone", "default:snowblock", "default:dirt_with_snow", "default:dirt_with_grass"},
 		{"air"},
-		0, 20, 0, 3000, 1, -31000, 31000
+		0, 20, 0, 4000, 1, -31000, 31000
 	)
 
 mobs:register_egg("mobs:rat", "Rat", "mobs_rat_inventory.png", 0)

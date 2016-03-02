@@ -21,7 +21,7 @@ include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := freetype
-LOCAL_SRC_FILES := deps/freetype2-android/Android/obj/local/$(TARGET_ARCH_ABI)/libfreetype2-static.a
+LOCAL_SRC_FILES := deps/freetype/objs/.libs/libfreetype.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -65,7 +65,7 @@ LOCAL_SRC_FILES := deps/openssl/libcrypto.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := minetest
+LOCAL_MODULE := multicraft
 
 LOCAL_CPP_FEATURES += exceptions
 
@@ -85,7 +85,11 @@ LOCAL_CFLAGS := -D_IRR_ANDROID_PLATFORM_      \
 ifndef NDEBUG
 LOCAL_CFLAGS += -g -D_DEBUG -O0 -fno-omit-frame-pointer
 else
-LOCAL_CFLAGS += -O3
+
+LOCAL_CFLAGS += -mfpu=vfpv3-d16 -D_NDK_MATH_NO_SOFTFP=1 -mfloat-abi=hard -march=armv7-a -Ofast -fno-fast-math
+LOCAL_LDFLAGS = -Wl,--no-warn-mismatch -lm_hard
+# ToDo - disable for x86!
+
 endif
 
 ifdef GPROF
@@ -108,7 +112,7 @@ LOCAL_C_INCLUDES :=                               \
 		jni/src/cguittfont                        \
 		deps/irrlicht/include                     \
 		deps/libiconv/include                     \
-		deps/freetype2-android/include            \
+		deps/freetype/include                     \
 		deps/curl/include                         \
 		deps/openal-soft/jni/OpenAL/include       \
 		deps/libogg/include                       \
@@ -309,6 +313,7 @@ LOCAL_SRC_FILES +=                                \
 		jni/src/script/lua_api/l_rollback.cpp     \
 		jni/src/script/lua_api/l_server.cpp       \
 		jni/src/script/lua_api/l_settings.cpp     \
+		jni/src/script/lua_api/l_http.cpp         \
 		jni/src/script/lua_api/l_util.cpp         \
 		jni/src/script/lua_api/l_vmanip.cpp       \
 		jni/src/script/scripting_game.cpp         \
